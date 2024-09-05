@@ -1,5 +1,10 @@
 # Black Forest Quantum Circuits
 
+[![Python](https://img.shields.io/pypi/pyversions/bfqcircuits.svg)](https://badge.fury.io/py/bfqcircuits)
+[![PyPI](https://badge.fury.io/py/bfqcircuits.svg)](https://badge.fury.io/py/bfqcircuits)
+[![DOI](https://zenodo.org/badge/835614971.svg)](https://zenodo.org/doi/10.5281/zenodo.13695981)
+[![Documentation](https://img.shields.io/badge/api-reference-blue.svg)](https://black-forest-quantum-circuits.readthedocs.io/en/latest/api/bfqcircuits.html)
+
 This package allows the numerical exploration of the most commonly used superconducting artificial atoms,
 the transmon and the fluxonium. Even though these circuit names are typically associated with certain parameter regimes,
 all regimes of these circuits can efficiently be analysed.
