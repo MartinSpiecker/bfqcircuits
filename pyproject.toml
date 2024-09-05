@@ -1,0 +1,119 @@
+[build-system]
+requires = [
+    "setuptools>=61.2",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bfqcircuits"
+version = "v0.1.1"
+license = {text = "Copyright (c) 2024. Martin Spiecker. All rights reserved."}
+description = "Superconducting circuit quantization"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+keywords = ["bfqcircuits"]
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "schemdraw"
+]
+
+[[project.authors]]
+name = "Martin Spiecker"
+email = "47812395+MartinSpiecker@users.noreply.github.com"
+
+[[project.maintainers]]
+name = "Martin Spiecker"
+email = "47812395+MartinSpiecker@users.noreply.github.com"
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown; charset=UTF-8"
+
+[project.urls]
+Homepage = "https://github.com/MartinSpiecker/bfqcircuits"
+"Bug Reports" = "https://github.com/MartinSpiecker/bfqcircuits/issues"
+"Source Code" = "https://github.com/MartinSpiecker/bfqcircuits"
+Documentation = "https://github.com/MartinSpiecker/bfqcircuits"
+
+[project.optional-dependencies]
+develop = ["ruff"]
+tests = ["coverage[toml]", "pytest"]
+docs = ["sphinx", "nbsphinx", "sphinx-rtd-theme"]
+
+[tool.setuptools]
+zip-safe = true
+package-dir = {"" = "src"}
+include-package-data = true
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+omit = ["tests/*"]
+source = ["src/bfqcircuits", ]
+[tool.coverage.report]
+show_missing = true
+
+[tool.ruff]
+line-length = 120
+# extend-exclude = ["snippets"]
+target-version = "py311"
+[tool.ruff.lint]
+# Enable flake8-bugbear (`B`) rules.
+select = ["E", "F", "W", "B", "Q", "N", "I", "C90", "C4", "COM", "UP", "G", "PIE", "T20", "PT", "SIM", "PTH", "PL", "TRY", "RSE", "SLF", "RUF"]
+# Currently disabled:
+#  "ANN", "D", "A", "RET", "ARG", "ERA"
+# Never enforce `E501` (line length violations).
+ignore = ["TRY003", "COM812", "N999", "SLF001"]
+# Do not apply print statement fix as it removes those.
+unfixable = ["T20"]
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
+# inline-quotes = "single"
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
+[tool.ruff.lint.isort]
+split-on-trailing-comma = false
+#known-first-party = ["freg", "aif"]
+[tool.ruff.format]
+# Prefer single quotes over double quotes.
+# quote-style = "single"
+# indent-style = "tab"
+# docstring-code-format = true
+skip-magic-trailing-comma = true
+
+[tool.mypy]
+# Python version, otherwise check on current version running
+# python_version = "3.11"
+# Functions should not return Any
+# warn_return_any = true
+# Annotated functions should always call annotated ones
+# disallow_untyped_calls = true
+# All defs should be typed
+# disallow_untyped_defs = true
+# Also warn on partly typed defs
+# disallow_incomplete_defs = true
+# Allow implicit optional:
+# no_implicit_optional = false
+# Ignore if extras or dependencies are missing
+ignore_missing_imports = true
+# Path to sources
+mypy_path = "$MYPY_CONFIG_FILE_DIR/src"
+# Allow toplevel namespaces:
+explicit_package_bases = true
+# Plugins:
+# plugins = "numpy.typing.mypy_plugin"
+# Advanced: Warn if a config section below is useless
+warn_unused_configs = true

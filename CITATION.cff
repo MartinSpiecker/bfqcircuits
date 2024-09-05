@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you find this software useful, please cite it as below."
+authors:
+  - family-names: Spiecker
+    given-names: Martin
+    orcid: https://orcid.org/0000-0001-8640-3270
+title: "Black Forest Quantum Circuits"
+version: v0.1.1
+identifiers:
+  - type: doi
+    value:
+date-released: 2024-09-04
