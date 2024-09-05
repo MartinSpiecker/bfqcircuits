@@ -43,7 +43,7 @@ Use it in your project::
 
     from bfqcircuits.core import fluxonium
 
-To get started, you may have a look at the example notebooks under docs/examples.
+To get started, you may have a look at the examples.
 
 Documentation
 --------------
