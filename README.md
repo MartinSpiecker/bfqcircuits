@@ -34,3 +34,7 @@ Use it in your project:
         $ from bfqcircuits.core import fluxonium
 
 To get started, you may have a look at the example notebooks under docs/examples.
+
+## Documentation
+
+The documentation for bfqcircuits is available at: https://black-forest-quantum-circuits.readthedocs.io
