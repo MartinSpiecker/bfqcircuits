@@ -51,13 +51,13 @@ class FitFluxonium(Fluxonium):
     def fit(self):
         """
         Run the fit routine. The fit is performed on the fluxonium parameters w, Ej, and flux_zpf.
-        The initial guess with respect to this parameters must be correct within a factor of 4.
+        The initial guess with respect to this parameters must be correct within a factor of 10.
 
         :return: None
         """
 
-        lb = np.array([0.25 * self.w, 0.25 * self.Ej, 0.25 * self.flux_zpf])
-        ub = np.array([4.0 * self.w, 4.0 * self.Ej, 4.0 * self.flux_zpf])
+        lb = np.array([0.1 * self.w, 0.1 * self.Ej, 0.1 * self.flux_zpf])
+        ub = np.array([10.0 * self.w, 10.0 * self.Ej, 10.0 * self.flux_zpf])
         bounds = (lb, ub)
 
         fit_result = optimize.least_squares(self._errorfunc, np.array([self.w, self.Ej, self.flux_zpf]),
