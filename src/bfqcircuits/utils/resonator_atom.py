@@ -23,7 +23,7 @@ class ResonatorAtom:
         self.E_sort = None
         self.v_sort = None
         self.associated_levels = None
-        self.E_trust = None
+        self.E_trust = 0.0
 
         self.resonator_transitions = None
         self.chi = None
@@ -87,8 +87,17 @@ class ResonatorAtom:
         self.H = self.H_sweep[:, :, step]
         self.E = np.empty(self.Na * self.Nr)
         self.E[:] = self.E_sweep[:, step]
-        self.Eg = self.E[0]
+        self.Eg = self.Eg_sweep[step]
         self.v = self.v_sweep[:, :, step]
+
+        if self.E_sort_sweep is not None:
+            self.E_sort = self.E_sort_sweep[step]
+        if self.v_sort_sweep is not None:
+            self.v_sort = self.v_sort_sweep[step]
+        if self.associated_levels_sweep is not None:
+            self.associated_levels = self.associated_levels_sweep[step]
+        if self.E_trust_sweep is not None:
+            self.E_trust = self.E_trust_sweep[step]
 
     def _calc_sweep(self, step):
         """
@@ -144,12 +153,14 @@ class ResonatorAtom:
 
         self.E_sweep += self.Eg_sweep
 
-    def calc_resonator_dipole_moments_sweep(self, state1, state2):
+    def calc_resonator_dipole_moments_sweep(self, state1, state2, sorted_states):
         """
         Calculation of the resonator flux and charge dipole moments between two states.
 
-        :param state1: first state.
-        :param state2: second state.
+        :param state1: integer if sorted_states is False, tupel (na, nr) if sorted_states is True.
+        :param state2: integer if sorted_states is False, tupel (na, nr) if sorted_states is True.
+        :param sorted_states: True or False. If True the states must have been sorted already
+                              with self.associated_levels_sweep().
         :return: None.
         """
 
@@ -159,14 +170,17 @@ class ResonatorAtom:
         for i in range(self.steps):
 
             self.inspect_sweep(i)
-            self.flux_dm_sweep[i], self.charge_dm_sweep[i] = self.calc_resonator_dipole_moments(state1, state2)
+            self.flux_dm_sweep[i], self.charge_dm_sweep[i] = self.calc_resonator_dipole_moments(state1, state2,
+                                                                                                sorted_states)
 
-    def calc_atom_dipole_moments_sweep(self, state1, state2):
+    def calc_atom_dipole_moments_sweep(self, state1, state2, sorted_states):
         """
         Calculation of the atom flux and charge dipole moments between two states.
 
-        :param state1: first state.
-        :param state2: second state.
+        :param state1: integer if sorted_states is False, tupel (na, nr) if sorted_states is True.
+        :param state2: integer if sorted_states is False, tupel (na, nr) if sorted_states is True.
+        :param sorted_states: True or False. If True the states must have been sorted already
+                              with self.associated_levels_sweep().
         :return: None.
         """
 
@@ -176,7 +190,8 @@ class ResonatorAtom:
         for i in range(self.steps):
 
             self.inspect_sweep(i)
-            self.flux_dm_sweep[i], self.charge_dm_sweep[i] = self.calc_atom_dipole_moments(state1, state2)
+            self.flux_dm_sweep[i], self.charge_dm_sweep[i] = self.calc_atom_dipole_moments(state1, state2,
+                                                                                           sorted_states)
 
     def associate_levels_sweep(self, dE=0.1, na_max=-1, nr_max=-1):
         """
@@ -303,7 +318,7 @@ class ResonatorAtom:
 
                     if arg.size > 0:
                         for j in arg:
-                            _, dm[j] = self.calc_resonator_dipole_moments(q, j)
+                            _, dm[j] = self.calc_resonator_dipole_moments(q, j, False)
 
                         # find the biggest overlap
                         q = np.argmax(dm)
@@ -369,10 +384,10 @@ class ResonatorAtom:
         # in comparison to resonator in ground state
         self.atom_stark_shift = self.atom_spectrum - self.atom_spectrum[:, 0, np.newaxis]
 
-    def calc_resonator_dipole_moments(self, state1, state2) -> (float, float):
+    def calc_resonator_dipole_moments(self, state1, state2, sorted_states) -> (float, float):
         pass
 
-    def calc_atom_dipole_moments(self, state1, state2) -> (float, float):
+    def calc_atom_dipole_moments(self, state1, state2, sorted_states) -> (float, float):
         pass
 
     def plot_energy_sweep(self, ax, n):
@@ -666,12 +681,13 @@ class ResonatorAtom:
         dmax = 0.0
         for i in state_list:
 
-            self.calc_resonator_dipole_moments_sweep(ref_state, i)
+            self.calc_resonator_dipole_moments_sweep(ref_state, i, False)
 
             if dipole == "flux":
                 dm_sweep = self.flux_dm_sweep
             elif dipole == "charge":
                 dm_sweep = self.charge_dm_sweep
+
             dmax = max((dmax, np.max(dm_sweep)))
 
             # Code to convert data in 3D polygons
@@ -687,6 +703,9 @@ class ResonatorAtom:
 
             # Code to plot the 3D polygons
             ax.add_collection3d(poly3dCollection)
+
+        self.flux_dm_sweep = None
+        self.charge_dm_sweep = None
 
         ax.set_xlim(np.min(self.par_sweep), np.max(self.par_sweep))
         ax.set_ylim(np.min(self.E_sweep[state_list, :]), np.max(self.E_sweep[state_list, :]))

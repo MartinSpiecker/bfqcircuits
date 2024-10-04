@@ -213,36 +213,54 @@ class ResonatorTransmon(ResonatorAtom):
     #####  core  #####
     ##################
 
-    def calc_resonator_dipole_moments(self, state1, state2):
+    def calc_resonator_dipole_moments(self, state1, state2, sorted_states):
         """
         Calculation of the resonator flux and charge dipole moments between two states.
         This routine assumes that the Hamiltonian has been diagonalized using self.diagonalize_hamiltonian().
 
-        :param state1: first state.
-        :param state2: second state.
+        :param state1: integer if sorted_states is False, tupel (na, nr) if sorted_states is True.
+        :param state2: integer if sorted_states is False, tupel (na, nr) if sorted_states is True.
+        :param sorted_states: True or False. If True the states must have been sorted already
+                              with self.associated_levels().
         :return: absolute flux dipole moment, absolute charge dipole moment.
         """
 
-        # For the resonator we essentially use the flux eigenstates the with complex prefactors (-i)^n such that
+        if sorted_states:
+            v1 = self.v_sort[*state1, :]
+            v2 = self.v_sort[*state2, :]
+        else:
+            v1 = self.v[:, state1]
+            v2 = self.v[:, state2]
+
+        # For the resonator we essentially use the flux eigenstates with complex prefactors (-i)^n such that
         # we can avoid a complex Hamiltonian
 
-        b_daggar = np.sum(self.v[self.Na:, state1] * self.sqrts_r * self.v[:-self.Na, state2])
-        b = np.sum(self.v[:-self.Na, state1] * self.sqrts_r * self.v[self.Na:, state2])
+        b_daggar = np.sum(v1[self.Na:] * self.sqrts_r * v2[:-self.Na])
+        b = np.sum(v1[:-self.Na] * self.sqrts_r * v2[self.Na:])
 
         return np.abs(self.flux_zpf[0, 0] * (b_daggar - b)), np.abs(self.charge_zpf[0, 0] * (b_daggar + b))
 
-    def calc_atom_dipole_moments(self, state1, state2):
+    def calc_atom_dipole_moments(self, state1, state2, sorted_states):
         """
         Calculation of the transmon flux and charge dipole moments between two states.
         This routine assumes that the Hamiltonian has been diagonalized using self.diagonalize_hamiltonian().
 
-        :param state1: first state.
-        :param state2: second state.
+        :param state1: integer if sorted_states is False, tupel (na, nr) if sorted_states is True.
+        :param state2: integer if sorted_states is False, tupel (na, nr) if sorted_states is True.
+        :param sorted_states: True or False. If True the states must have been sorted already
+                              with self.associated_levels().
         :return: absolute flux dipole moment, absolute charge dipole moment.
         """
 
-        fdm = np.dot(self.v[:, state1], np.dot(self.flux_operator, self.v[:, state2]))
-        cdm = np.sum(self.v[:, state1] * self.charge_operator * self.v[:, state2])
+        if sorted_states:
+            v1 = self.v_sort[*state1, :]
+            v2 = self.v_sort[*state2, :]
+        else:
+            v1 = self.v[:, state1]
+            v2 = self.v[:, state2]
+
+        fdm = np.dot(v1, np.dot(self.flux_operator, v2))
+        cdm = np.sum(v1 * self.charge_operator * v2)
 
         return np.abs(fdm), np.abs(cdm)
 

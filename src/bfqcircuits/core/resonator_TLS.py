@@ -46,10 +46,10 @@ class ResonatorTLS(ResonatorAtom):
         """
         Sweep of system parameters.
 
-        :param par_sweep: either dict with keys "Lr", "La", "Cr", "Ca", "Cs" "Ej", "ng" and corresponding
+        :param par_sweep: either dict with keys "wr", "wa", "g" and corresponding
                           1D numpy parameter arrays,
                           or 1D numpy array with parameter sweep for the parameter specified by par_name.
-        :param par_name: "Lr", "La", "Cr", "Ca", "Cs", "Ej", "ng".
+        :param par_name: "wr", "wa", "g".
         :return: None.
         """
 
@@ -88,6 +88,7 @@ class ResonatorTLS(ResonatorAtom):
         self.system_pars_sweep = np.zeros(self.steps, dtype=object)
         self.H_sweep = np.full((size, size, self.steps), np.nan)
         self.E_sweep = np.full((size, self.steps), np.nan)
+        self.Eg_sweep = np.zeros(self.steps)
         self.v_sweep = np.full((size, size, self.steps), np.nan)
 
         for i in range(self.steps):
@@ -125,33 +126,51 @@ class ResonatorTLS(ResonatorAtom):
     #####  analysis  #####
     ######################
 
-    def calc_resonator_dipole_moments(self, state1, state2):
+    def calc_resonator_dipole_moments(self, state1, state2, sorted_states):
         """
         Calculation of the resonator position and momentum dipole moments between two states.
         This routine assumes that the Hamiltonian has been diagonalized using self.diagonalize_hamiltonian().
 
-        :param state1: first state.
-        :param state2: second state.
+        :param state1: integer if sorted_states is False, tupel (na, nr) if sorted_states is True.
+        :param state2: integer if sorted_states is False, tupel (na, nr) if sorted_states is True.
+        :param sorted_states: True or False. If True the states must have been sorted already
+                              with self.associated_levels().
         :return: absolute position dipole moment, absolute momentum dipole moment.
         """
 
-        b_daggar = np.sum(self.v[self.Na:, state1] * self.sqrts_r * self.v[:-self.Na, state2])
-        b = np.sum(self.v[:-self.Na, state1] * self.sqrts_r * self.v[self.Na:, state2])
+        if sorted_states:
+            v1 = self.v_sort[*state1, :]
+            v2 = self.v_sort[*state2, :]
+        else:
+            v1 = self.v[:, state1]
+            v2 = self.v[:, state2]
+
+        b_daggar = np.sum(v1[self.Na:] * self.sqrts_r * v2[:-self.Na])
+        b = np.sum(v1[:-self.Na] * self.sqrts_r * v2[self.Na:])
 
         return np.abs((b_daggar + b)), np.abs((b_daggar - b))
 
-    def calc_atom_dipole_moments(self, state1, state2):
+    def calc_atom_dipole_moments(self, state1, state2, sorted_states):
         """
         Calculation of the TLS x- and y-dipole moments between two states.
         This routine assumes that the Hamiltonian has been diagonalized using self.diagonalize_hamiltonian().
 
-        :param state1: first state.
-        :param state2: second state.
-        :return: absolute x-dipole moment, absolute x-dipole moment.
+        :param state1: integer if sorted_states is False, tupel (na, nr) if sorted_states is True.
+        :param state2: integer if sorted_states is False, tupel (na, nr) if sorted_states is True.
+        :param sorted_states: True or False. If True the states must have been sorted already
+                              with self.associated_levels().
+        :return: absolute x-dipole moment, absolute y-dipole moment.
         """
 
-        a_daggar = np.sum(self.v[1:, state1] * self.sqrts_a * self.v[:-1, state2])
-        a = np.sum(self.v[:-1, state1] * self.sqrts_a * self.v[1:, state2])
+        if sorted_states:
+            v1 = self.v_sort[*state1, :]
+            v2 = self.v_sort[*state2, :]
+        else:
+            v1 = self.v[:, state1]
+            v2 = self.v[:, state2]
+
+        a_daggar = np.sum(v1[1:] * self.sqrts_a * v2[:-1])
+        a = np.sum(v1[:-1] * self.sqrts_a * v2[1:])
 
         return np.abs((a_daggar + a) / np.sqrt(2)), np.abs((a_daggar - a) / np.sqrt(2))
 
