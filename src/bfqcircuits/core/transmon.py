@@ -131,7 +131,7 @@ class Transmon:
         self.transmon_pars_sweep = np.zeros(self.steps, dtype=object)
         self.H_sweep = np.full((N_max, N_max, self.steps), np.nan)
         self.E_sweep = np.full((N_max, self.steps), np.nan)
-        self.Eg_sweep = np.empty(self.steps)
+        self.Eg_sweep = np.zeros(self.steps)
         self.v_sweep = np.full((N_max, N_max, self.steps), np.nan)
 
         for i in range(self.steps):
@@ -156,7 +156,9 @@ class Transmon:
         self._operators()
 
         self.H = self.H_sweep[:, :, step]
-        self.E = self.E_sweep[:, step]
+        self.E = np.empty(self.N)
+        self.E[:] = self.E_sweep[:, step]
+        self.Eg = self.Eg_sweep[step]
         self.v = self.v_sweep[:, :, step]
 
     def _initialize_sweep(self, par_sweep):
