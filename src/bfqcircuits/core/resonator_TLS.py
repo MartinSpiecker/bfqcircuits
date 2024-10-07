@@ -126,23 +126,23 @@ class ResonatorTLS(ResonatorAtom):
     #####  analysis  #####
     ######################
 
-    def calc_resonator_dipole_moments(self, state1, state2, sorted_states):
+    def calc_resonator_dipole_moments(self, state1, state2):
         """
         Calculation of the resonator position and momentum dipole moments between two states.
         This routine assumes that the Hamiltonian has been diagonalized using self.diagonalize_hamiltonian().
 
-        :param state1: integer if sorted_states is False, tupel (na, nr) if sorted_states is True.
-        :param state2: integer if sorted_states is False, tupel (na, nr) if sorted_states is True.
-        :param sorted_states: True or False. If True the states must have been sorted already
-                              with self.associated_levels().
+        :param state1: integer or tupel (na, nr), which requires that the states have been sorted.
+        :param state2: integer or tupel (na, nr), which requires that the states have been sorted.
         :return: absolute position dipole moment, absolute momentum dipole moment.
         """
 
-        if sorted_states:
+        if hasattr(state1, '__iter__'):
             v1 = self.v_sort[*state1, :]
-            v2 = self.v_sort[*state2, :]
         else:
             v1 = self.v[:, state1]
+        if hasattr(state2, '__iter__'):
+            v2 = self.v_sort[*state2, :]
+        else:
             v2 = self.v[:, state2]
 
         b_daggar = np.sum(v1[self.Na:] * self.sqrts_r * v2[:-self.Na])
@@ -150,23 +150,23 @@ class ResonatorTLS(ResonatorAtom):
 
         return np.abs((b_daggar + b)), np.abs((b_daggar - b))
 
-    def calc_atom_dipole_moments(self, state1, state2, sorted_states):
+    def calc_atom_dipole_moments(self, state1, state2):
         """
         Calculation of the TLS x- and y-dipole moments between two states.
         This routine assumes that the Hamiltonian has been diagonalized using self.diagonalize_hamiltonian().
 
-        :param state1: integer if sorted_states is False, tupel (na, nr) if sorted_states is True.
-        :param state2: integer if sorted_states is False, tupel (na, nr) if sorted_states is True.
-        :param sorted_states: True or False. If True the states must have been sorted already
-                              with self.associated_levels().
+        :param state1: integer or tupel (na, nr), which requires that the states have been sorted.
+        :param state2: integer or tupel (na, nr), which requires that the states have been sorted.
         :return: absolute x-dipole moment, absolute y-dipole moment.
         """
 
-        if sorted_states:
+        if hasattr(state1, '__iter__'):
             v1 = self.v_sort[*state1, :]
-            v2 = self.v_sort[*state2, :]
         else:
             v1 = self.v[:, state1]
+        if hasattr(state2, '__iter__'):
+            v2 = self.v_sort[*state2, :]
+        else:
             v2 = self.v[:, state2]
 
         a_daggar = np.sum(v1[1:] * self.sqrts_a * v2[:-1])

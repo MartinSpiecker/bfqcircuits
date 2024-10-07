@@ -213,23 +213,23 @@ class ResonatorTransmon(ResonatorAtom):
     #####  core  #####
     ##################
 
-    def calc_resonator_dipole_moments(self, state1, state2, sorted_states):
+    def calc_resonator_dipole_moments(self, state1, state2):
         """
         Calculation of the resonator flux and charge dipole moments between two states.
         This routine assumes that the Hamiltonian has been diagonalized using self.diagonalize_hamiltonian().
 
-        :param state1: integer if sorted_states is False, tupel (na, nr) if sorted_states is True.
-        :param state2: integer if sorted_states is False, tupel (na, nr) if sorted_states is True.
-        :param sorted_states: True or False. If True the states must have been sorted already
-                              with self.associated_levels().
+        :param state1: integer or tupel (na, nr), which requires that the states have been sorted.
+        :param state2: integer or tupel (na, nr), which requires that the states have been sorted.
         :return: absolute flux dipole moment, absolute charge dipole moment.
         """
 
-        if sorted_states:
+        if hasattr(state1, '__iter__'):
             v1 = self.v_sort[*state1, :]
-            v2 = self.v_sort[*state2, :]
         else:
             v1 = self.v[:, state1]
+        if hasattr(state2, '__iter__'):
+            v2 = self.v_sort[*state2, :]
+        else:
             v2 = self.v[:, state2]
 
         # For the resonator we essentially use the flux eigenstates with complex prefactors (-i)^n such that
@@ -240,23 +240,23 @@ class ResonatorTransmon(ResonatorAtom):
 
         return np.abs(self.flux_zpf[0, 0] * (b_daggar - b)), np.abs(self.charge_zpf[0, 0] * (b_daggar + b))
 
-    def calc_atom_dipole_moments(self, state1, state2, sorted_states):
+    def calc_atom_dipole_moments(self, state1, state2):
         """
         Calculation of the transmon flux and charge dipole moments between two states.
         This routine assumes that the Hamiltonian has been diagonalized using self.diagonalize_hamiltonian().
 
-        :param state1: integer if sorted_states is False, tupel (na, nr) if sorted_states is True.
-        :param state2: integer if sorted_states is False, tupel (na, nr) if sorted_states is True.
-        :param sorted_states: True or False. If True the states must have been sorted already
-                              with self.associated_levels().
+        :param state1: integer or tupel (na, nr), which requires that the states have been sorted.
+        :param state2: integer or tupel (na, nr), which requires that the states have been sorted.
         :return: absolute flux dipole moment, absolute charge dipole moment.
         """
 
-        if sorted_states:
+        if hasattr(state1, '__iter__'):
             v1 = self.v_sort[*state1, :]
-            v2 = self.v_sort[*state2, :]
         else:
             v1 = self.v[:, state1]
+        if hasattr(state2, '__iter__'):
+            v2 = self.v_sort[*state2, :]
+        else:
             v2 = self.v[:, state2]
 
         fdm = np.dot(v1, np.dot(self.flux_operator, v2))

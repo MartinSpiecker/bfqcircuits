@@ -157,14 +157,12 @@ class ResonatorAtom:
 
         self.E_sweep += self.Eg_sweep
 
-    def calc_resonator_dipole_moments_sweep(self, state1, state2, sorted_states):
+    def calc_resonator_dipole_moments_sweep(self, state1, state2):
         """
         Calculation of the resonator flux and charge dipole moments between two states.
 
-        :param state1: integer if sorted_states is False, tupel (na, nr) if sorted_states is True.
-        :param state2: integer if sorted_states is False, tupel (na, nr) if sorted_states is True.
-        :param sorted_states: True or False. If True the states must have been sorted already
-                              with self.associated_levels_sweep().
+        :param state1: integer or tupel (na, nr), which requires that the states have been sorted.
+        :param state2: integer or tupel (na, nr), which requires that the states have been sorted.
         :return: None.
         """
 
@@ -174,17 +172,14 @@ class ResonatorAtom:
         for i in range(self.steps):
 
             self.inspect_sweep(i)
-            self.flux_dm_sweep[i], self.charge_dm_sweep[i] = self.calc_resonator_dipole_moments(state1, state2,
-                                                                                                sorted_states)
+            self.flux_dm_sweep[i], self.charge_dm_sweep[i] = self.calc_resonator_dipole_moments(state1, state2)
 
-    def calc_atom_dipole_moments_sweep(self, state1, state2, sorted_states):
+    def calc_atom_dipole_moments_sweep(self, state1, state2):
         """
         Calculation of the atom flux and charge dipole moments between two states.
 
-        :param state1: integer if sorted_states is False, tupel (na, nr) if sorted_states is True.
-        :param state2: integer if sorted_states is False, tupel (na, nr) if sorted_states is True.
-        :param sorted_states: True or False. If True the states must have been sorted already
-                              with self.associated_levels_sweep().
+        :param state1: integer or tupel (na, nr), which requires that the states have been sorted.
+        :param state2: integer or tupel (na, nr), which requires that the states have been sorted.
         :return: None.
         """
 
@@ -194,8 +189,7 @@ class ResonatorAtom:
         for i in range(self.steps):
 
             self.inspect_sweep(i)
-            self.flux_dm_sweep[i], self.charge_dm_sweep[i] = self.calc_atom_dipole_moments(state1, state2,
-                                                                                           sorted_states)
+            self.flux_dm_sweep[i], self.charge_dm_sweep[i] = self.calc_atom_dipole_moments(state1, state2)
 
     def associate_levels_sweep(self, dE=0.1, na_max=-1, nr_max=-1):
         """
@@ -323,7 +317,7 @@ class ResonatorAtom:
 
                     if arg.size > 0:
                         for j in arg:
-                            _, dm[j] = self.calc_resonator_dipole_moments(q, j, False)
+                            _, dm[j] = self.calc_resonator_dipole_moments(q, j)
 
                         # find the biggest overlap
                         q = np.argmax(dm)
@@ -389,10 +383,10 @@ class ResonatorAtom:
         # in comparison to resonator in ground state
         self.atom_stark_shift = self.atom_spectrum - self.atom_spectrum[:, 0, np.newaxis]
 
-    def calc_resonator_dipole_moments(self, state1, state2, sorted_states) -> (float, float):
+    def calc_resonator_dipole_moments(self, state1, state2) -> (float, float):
         pass
 
-    def calc_atom_dipole_moments(self, state1, state2, sorted_states) -> (float, float):
+    def calc_atom_dipole_moments(self, state1, state2) -> (float, float):
         pass
 
     def plot_energy_sweep(self, ax, n):
@@ -686,7 +680,7 @@ class ResonatorAtom:
         dmax = 0.0
         for i in state_list:
 
-            self.calc_resonator_dipole_moments_sweep(ref_state, i, False)
+            self.calc_resonator_dipole_moments_sweep(ref_state, i)
 
             if dipole == "flux":
                 dm_sweep = self.flux_dm_sweep
