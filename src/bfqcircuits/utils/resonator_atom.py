@@ -39,6 +39,7 @@ class ResonatorAtom:
         self.Eg_sweep = None
         self.v_sweep = None
 
+        self._sweep_sorted = False
         self.E_sort_sweep = None
         self.v_sort_sweep = None
         self.associated_levels_sweep = None
@@ -76,6 +77,12 @@ class ResonatorAtom:
         self.Eg_sweep = np.zeros(self.steps)
         self.v_sweep = np.zeros((self.Nr * self.Na, self.Nr * self.Na, self.steps))
 
+        self._sweep_sorted = False
+        self.E_sort_sweep = None
+        self.v_sort_sweep = None
+        self.E_trust_sweep = None
+        self.associated_levels_sweep = None
+
     def inspect_sweep(self, step):
         """
         Reset system to a specific sweep step. The routine assumes that the sweep has already been performed.
@@ -90,13 +97,10 @@ class ResonatorAtom:
         self.Eg = self.Eg_sweep[step]
         self.v = self.v_sweep[:, :, step]
 
-        if self.E_sort_sweep is not None:
+        if self._sweep_sorted:
             self.E_sort = self.E_sort_sweep[step]
-        if self.v_sort_sweep is not None:
             self.v_sort = self.v_sort_sweep[step]
-        if self.associated_levels_sweep is not None:
             self.associated_levels = self.associated_levels_sweep[step]
-        if self.E_trust_sweep is not None:
             self.E_trust = self.E_trust_sweep[step]
 
     def _calc_sweep(self, step):
@@ -225,6 +229,7 @@ class ResonatorAtom:
             self.E_trust_sweep[i] = self.E_trust
 
         self.E_trust = np.min(self.E_trust_sweep)
+        self._sweep_sorted = True
 
     def derive_spectrum_properties_sweep(self):
         """
