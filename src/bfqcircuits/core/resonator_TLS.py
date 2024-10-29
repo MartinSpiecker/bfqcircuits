@@ -12,14 +12,15 @@ class ResonatorTLS(ResonatorAtom):
         ResonatorAtom.__init__(self)
 
         self.wr = 0.0
+        self.wa = 0.0
         self.wa_x = 0.0
         self.wa_y = 0.0
         self.wa_z = 0.0
-        self.wa = None
         self.g = 0.0
         self.RWA = False
 
         self.Na = 2
+        self.Nr = 1
 
     def set_parameters(self, wr=None, wa_x=None, wa_y=None, wa_z=None, g=None, RWA=None, Nr=None):
         """
@@ -68,12 +69,12 @@ class ResonatorTLS(ResonatorAtom):
 
             keys = list(par_sweep.keys())
 
-            self.steps = par_sweep[keys[0]].size
-
             if "wa_y" in keys or self.wa_y != 0.0:
                 self._dtype = complex
             else:
                 self._dtype = float
+
+            self.steps = par_sweep[keys[0]].size
             self._initialize_sweep(np.arange(self.steps))
             for i in range(self.steps):
                 for key in keys:
@@ -102,14 +103,14 @@ class ResonatorTLS(ResonatorAtom):
         :return: None.
         """
 
-        self.steps = Nr
-        self.par_sweep = np.arange(1, Nr + 1)
-        self.system_pars_sweep = np.zeros(self.steps, dtype=object)
-
         if self.wa_y == 0.0:
             self._dtype = float
         else:
             self._dtype = complex
+
+        self.steps = Nr
+        self.par_sweep = np.arange(1, Nr + 1)
+        self.system_pars_sweep = np.zeros(self.steps, dtype=object)
         size = self.Na * Nr
         self.H_sweep = np.full((size, size, self.steps), np.nan, dtype=self._dtype)
         self.E_sweep = np.full((size, self.steps), np.nan)
@@ -129,10 +130,10 @@ class ResonatorTLS(ResonatorAtom):
         """
 
         self.wr = self.system_pars_sweep[step].wr
+        self.wa = self.system_pars_sweep[step].wa
         self.wa_x = self.system_pars_sweep[step].wa_x
         self.wa_y = self.system_pars_sweep[step].wa_y
         self.wa_z = self.system_pars_sweep[step].wa_z
-        self.wa = self.system_pars_sweep[step].wa
         self.g = self.system_pars_sweep[step].g
         self.RWA = self.system_pars_sweep[step].RWA
         self.Nr = self.system_pars_sweep[step].Nr
@@ -209,40 +210,6 @@ class ResonatorTLS(ResonatorAtom):
             a = np.sum(np.conjugate(v1[:-1]) * self.sqrts_a * v2[1:])
 
         return np.abs((a_daggar + a) / np.sqrt(2)), np.abs((a_daggar - a) / np.sqrt(2))
-
-    def associate_levels(self, dE=0.1, na_max=-1, nr_max=-1):
-
-        # if self.RWA:
-        #
-        #     d = self.wa - self.wr
-        #
-        #     self.associated_levels = np.full((self.Na * self.Nr, 2), 0)
-        #
-        #     self.associated_levels[0, :] = (0, 0)
-        #     for i in range(1, self.Nr):
-        #
-        #         if d <= 0:
-        #             self.associated_levels[self.Na * i - 1, :] = (i - 1, 1)
-        #             self.associated_levels[self.Na * i, :] = (i, 0)
-        #         else:
-        #             self.associated_levels[self.Na * i - 1, :] = (i, 0)
-        #             self.associated_levels[self.Na * i, :] = (i - 1, 1)
-        #     self.associated_levels[-1, :] = (self.Nr - 1, 1)
-        #
-        #     self.E_sort = np.empty((self.Na, self.Nr))
-        #     self.v_sort = np.empty((self.Na, self.Nr, self.Na * self.Nr))
-        #
-        #     for i in range(self.Na):
-        #
-        #         arg = np.argwhere(self.associated_levels[:, 1] == i)[:, 0]
-        #         self.E_sort[i, :] = self.E[arg]
-        #         self.v_sort[i, :, :] = self.v[:, arg].T
-        #
-        #     self.E_trust = np.inf
-        #
-        # else:
-
-        super().associate_levels(dE=dE, na_max=na_max, nr_max=nr_max)
 
     ###################
     #####  plots  #####
