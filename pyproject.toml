@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bfqcircuits"
-version = "v0.1.1"
+version = "v0.2.0"
 license = {text = "Copyright (c) 2024. Martin Spiecker. All rights reserved."}
 description = "Superconducting circuit quantization"
 classifiers = [

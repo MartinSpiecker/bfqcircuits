@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(current_dir, '../src')))
 project = 'Black Forest Quantum Circuits'
 copyright = '2024, Martin Spiecker'
 author = 'Martin Spiecker'
-version = 'v0.1.1'
+version = 'v0.2.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
