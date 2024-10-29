@@ -12,27 +12,37 @@ class ResonatorTLS(ResonatorAtom):
         ResonatorAtom.__init__(self)
 
         self.wr = 0.0
-        self.wa = 0.0
+        self.wa_x = 0.0
+        self.wa_y = 0.0
+        self.wa_z = 0.0
+        self.wa = None
         self.g = 0.0
-        self.RWA = True
+        self.RWA = False
 
         self.Na = 2
 
-    def set_parameters(self, wr=None, wa=None, g=None, RWA=None, Nr=None):
+    def set_parameters(self, wr=None, wa_x=None, wa_y=None, wa_z=None, g=None, RWA=None, Nr=None):
         """
         Helper routine to set relevant system parameters.
 
         :param wr: resonator frequency in [GHz].
-        :param wa: qubit frequency in [GHz].
-        :param g: coupling in [GHz].
+        :param wa_x: qubit energy in x-direction in [GHz].
+        :param wa_y: qubit energy in y-direction in [GHz].
+        :param wa_z: qubit energy in z-direction in [GHz].
+        :param g: transverse (sigma_x * x) coupling strength in [GHz].
+        :param RWA: boolean toggling the rotating wave approximation.
         :param Nr: number of resonator basis states.
         :return: None.
         """
 
         if wr is not None:
             self.wr = wr
-        if wa is not None:
-            self.wa = wa
+        if wa_x is not None:
+            self.wa_x = wa_x
+        if wa_y is not None:
+            self.wa_y = wa_y
+        if wa_z is not None:
+            self.wa_z = wa_z
         if g is not None:
             self.g = g
         if RWA is not None:
@@ -40,16 +50,17 @@ class ResonatorTLS(ResonatorAtom):
         if Nr is not None:
             self.Nr = Nr
 
+        self.wa = np.sqrt(self.wa_x**2 + self.wa_y**2 + self.wa_z**2)
         self.wr_approx = self.wr
 
     def sweep_parameter(self, par_sweep, par_name=None):
         """
         Sweep of system parameters.
 
-        :param par_sweep: either dict with keys "wr", "wa", "g" and corresponding
+        :param par_sweep: either dict with keys "wr", "wa_x", "wa_y", "wa_z", "g" and corresponding
                           1D numpy parameter arrays,
                           or 1D numpy array with parameter sweep for the parameter specified by par_name.
-        :param par_name: "wr", "wa", "g".
+        :param par_name: "wr", "wa_x", "wa_y", "wa_z", "g".
         :return: None.
         """
 
@@ -58,14 +69,23 @@ class ResonatorTLS(ResonatorAtom):
             keys = list(par_sweep.keys())
 
             self.steps = par_sweep[keys[0]].size
+
+            if "wa_y" in keys or self.wa_y != 0.0:
+                self._dtype = complex
+            else:
+                self._dtype = float
             self._initialize_sweep(np.arange(self.steps))
             for i in range(self.steps):
                 for key in keys:
                     setattr(self, key, par_sweep[key][i])
                 self._calc_sweep(i)
         else:
-            if par_name in ["wr", "wa", "g"]:
+            if par_name in ["wr", "wa_x", "wa_y", "wa_z", "g"]:
 
+                if par_name == "wa_y" or self.wa_y != 0.0:
+                    self._dtype = complex
+                else:
+                    self._dtype = float
                 self._initialize_sweep(par_sweep)
                 for i in range(self.steps):
                     setattr(self, par_name, self.par_sweep[i])
@@ -82,17 +102,22 @@ class ResonatorTLS(ResonatorAtom):
         :return: None.
         """
 
-        self.steps = Nr.shape[0]
-        self.par_sweep = Nr
-        size = self.Na * Nr
+        self.steps = Nr
+        self.par_sweep = np.arange(1, Nr + 1)
         self.system_pars_sweep = np.zeros(self.steps, dtype=object)
-        self.H_sweep = np.full((size, size, self.steps), np.nan)
+
+        if self.wa_y == 0.0:
+            self._dtype = float
+        else:
+            self._dtype = complex
+        size = self.Na * Nr
+        self.H_sweep = np.full((size, size, self.steps), np.nan, dtype=self._dtype)
         self.E_sweep = np.full((size, self.steps), np.nan)
         self.Eg_sweep = np.zeros(self.steps)
-        self.v_sweep = np.full((size, size, self.steps), np.nan)
+        self.v_sweep = np.full((size, size, self.steps), np.nan, dtype=self._dtype)
 
         for i in range(self.steps):
-            self.Nr = Nr[i, 1]
+            self.Nr = self.par_sweep[i]
             self._calc_sweep(i)
 
     def inspect_sweep(self, step):
@@ -104,6 +129,9 @@ class ResonatorTLS(ResonatorAtom):
         """
 
         self.wr = self.system_pars_sweep[step].wr
+        self.wa_x = self.system_pars_sweep[step].wa_x
+        self.wa_y = self.system_pars_sweep[step].wa_y
+        self.wa_z = self.system_pars_sweep[step].wa_z
         self.wa = self.system_pars_sweep[step].wa
         self.g = self.system_pars_sweep[step].g
         self.RWA = self.system_pars_sweep[step].RWA
@@ -145,8 +173,12 @@ class ResonatorTLS(ResonatorAtom):
         else:
             v2 = self.v[:, state2]
 
-        b_daggar = np.sum(v1[self.Na:] * self.sqrts_r * v2[:-self.Na])
-        b = np.sum(v1[:-self.Na] * self.sqrts_r * v2[self.Na:])
+        if self._dtype == float:
+            b_daggar = np.sum(v1[self.Na:] * self.sqrts_r * v2[:-self.Na])
+            b = np.sum(v1[:-self.Na] * self.sqrts_r * v2[self.Na:])
+        else:
+            b_daggar = np.sum(np.conjugate(v1[self.Na:]) * self.sqrts_r * v2[:-self.Na])
+            b = np.sum(np.conjugate(v1[:-self.Na]) * self.sqrts_r * v2[self.Na:])
 
         return np.abs((b_daggar + b)), np.abs((b_daggar - b))
 
@@ -169,43 +201,48 @@ class ResonatorTLS(ResonatorAtom):
         else:
             v2 = self.v[:, state2]
 
-        a_daggar = np.sum(v1[1:] * self.sqrts_a * v2[:-1])
-        a = np.sum(v1[:-1] * self.sqrts_a * v2[1:])
+        if self._dtype == float:
+            a_daggar = np.sum(v1[1:] * self.sqrts_a * v2[:-1])
+            a = np.sum(v1[:-1] * self.sqrts_a * v2[1:])
+        else:
+            a_daggar = np.sum(np.conjugate(v1[1:]) * self.sqrts_a * v2[:-1])
+            a = np.sum(np.conjugate(v1[:-1]) * self.sqrts_a * v2[1:])
 
         return np.abs((a_daggar + a) / np.sqrt(2)), np.abs((a_daggar - a) / np.sqrt(2))
 
     def associate_levels(self, dE=0.1, na_max=-1, nr_max=-1):
 
-        if self.RWA:
+        # if self.RWA:
+        #
+        #     d = self.wa - self.wr
+        #
+        #     self.associated_levels = np.full((self.Na * self.Nr, 2), 0)
+        #
+        #     self.associated_levels[0, :] = (0, 0)
+        #     for i in range(1, self.Nr):
+        #
+        #         if d <= 0:
+        #             self.associated_levels[self.Na * i - 1, :] = (i - 1, 1)
+        #             self.associated_levels[self.Na * i, :] = (i, 0)
+        #         else:
+        #             self.associated_levels[self.Na * i - 1, :] = (i, 0)
+        #             self.associated_levels[self.Na * i, :] = (i - 1, 1)
+        #     self.associated_levels[-1, :] = (self.Nr - 1, 1)
+        #
+        #     self.E_sort = np.empty((self.Na, self.Nr))
+        #     self.v_sort = np.empty((self.Na, self.Nr, self.Na * self.Nr))
+        #
+        #     for i in range(self.Na):
+        #
+        #         arg = np.argwhere(self.associated_levels[:, 1] == i)[:, 0]
+        #         self.E_sort[i, :] = self.E[arg]
+        #         self.v_sort[i, :, :] = self.v[:, arg].T
+        #
+        #     self.E_trust = np.inf
+        #
+        # else:
 
-            d = self.wa - self.wr
-
-            self.associated_levels = np.full((self.Na * self.Nr, 2), 0)
-
-            self.associated_levels[0, :] = (0, 0)
-            for i in range(1, self.Nr):
-
-                if d <= 0:
-                    self.associated_levels[self.Na * i - 1, :] = (i - 1, 1)
-                    self.associated_levels[self.Na * i, :] = (i, 0)
-                else:
-                    self.associated_levels[self.Na * i - 1, :] = (i, 0)
-                    self.associated_levels[self.Na * i, :] = (i - 1, 1)
-            self.associated_levels[-1, :] = (self.Nr - 1, 1)
-
-            self.E_sort = np.empty((self.Na, self.Nr))
-            self.v_sort = np.empty((self.Na, self.Nr, self.Na * self.Nr))
-
-            for i in range(self.Na):
-
-                arg = np.argwhere(self.associated_levels[:, 1] == i)[:, 0]
-                self.E_sort[i, :] = self.E[arg]
-                self.v_sort[i, :, :] = self.v[:, arg].T
-
-            self.E_trust = np.inf
-
-        else:
-            super().associate_levels(dE=dE, na_max=na_max, nr_max=nr_max)
+        super().associate_levels(dE=dE, na_max=na_max, nr_max=nr_max)
 
     ###################
     #####  plots  #####
@@ -245,72 +282,37 @@ class ResonatorTLS(ResonatorAtom):
         :return: None.
         """
 
-        self.H = np.zeros((self.Nr * self.Na, self.Nr * self.Na))
-
-        if not self.RWA:
-
-            self.H = (np.diag(np.repeat(self.wr * (np.arange(self.Nr) + 0.5), self.Na) +
-                              np.tile(self.wa * (np.arange(self.Na) - 0.5), self.Nr)) +
-                      np.diag((self.g * np.tile(np.arange(self.Na), self.Nr) *
-                               np.repeat(np.sqrt(np.arange(1, self.Nr + 1)), self.Na))[:-1], 1) +
-                      np.diag((self.g * np.tile(np.arange(self.Na), self.Nr) *
-                               np.repeat(np.sqrt(np.arange(1, self.Nr + 1)), self.Na))[:-1], -1) +
-                      np.diag((self.g * np.tile(np.arange(self.Na), self.Nr) *
-                               np.repeat(np.sqrt(np.arange(1, self.Nr + 1)), self.Na))[1:-1], 2) +
-                      np.diag((self.g * np.tile(np.arange(self.Na), self.Nr) *
-                               np.repeat(np.sqrt(np.arange(1, self.Nr + 1)), self.Na))[1:-1], -2))
-
-            super().diagonalize_hamiltonian()
+        if self.wa_y == 0.0:
+            self.H = np.zeros((self.Nr * self.Na, self.Nr * self.Na), dtype=float)
         else:
-            self.H = (np.diag(np.repeat(self.wr * (np.arange(self.Nr) + 0.5), self.Na) +
-                              np.tile(self.wa * (np.arange(self.Na) - 0.5), self.Nr)) +
-                      np.diag((self.g * np.tile(np.arange(self.Na), self.Nr) *
-                               np.repeat(np.sqrt(np.arange(1, self.Nr + 1)), self.Na))[:-1], 1) +
-                      np.diag((self.g * np.tile(np.arange(self.Na), self.Nr) *
-                               np.repeat(np.sqrt(np.arange(1, self.Nr + 1)), self.Na))[:-1], -1))
+            self.H = np.zeros((self.Nr * self.Na, self.Nr * self.Na), dtype=complex)
 
-            d = self.wa - self.wr
-            self.v = np.eye(self.Na * self.Nr)
-            for i in range(1, self.Nr):
+        self.H += np.diag(np.repeat(self.wr * (np.arange(self.Nr) + 0.5), self.Na) +
+                          np.tile(self.wa_z * (np.arange(self.Na) - 0.5), self.Nr))
 
-                sqrt = np.sqrt(d**2 + 4 * self.g**2 * i)
+        self.H += (np.diag(np.tile(0.5 * self.wa_x * np.arange(self.Na), self.Nr)[1::], 1) +
+                   np.diag(np.tile(0.5 * self.wa_x * np.arange(self.Na), self.Nr)[1::], -1))
 
-                if d <= 0:
-                    s1 = - d + sqrt
-                    s2 = 2 * self.g * np.sqrt(i)
-                else:
-                    s2 = d + sqrt
-                    s1 = 2 * self.g * np.sqrt(i)
+        if self.wa_y != 0.0:
+            self.H += (np.diag(np.tile(-0.5j * self.wa_y * np.arange(self.Na), self.Nr)[1::], 1) +
+                       np.diag(np.tile(0.5j * self.wa_y * np.arange(self.Na), self.Nr)[1::], -1))
 
-                v1 = s1 / np.sqrt(s1**2 + s2**2)
-                v2 = s2 / np.sqrt(s1**2 + s2**2)
+        if self.RWA:
+            self.H += (np.diag((self.g * np.tile(np.arange(self.Na), self.Nr) *
+                                np.repeat(np.sqrt(np.arange(1, self.Nr + 1)), self.Na))[:-1], 1) +
+                       np.diag((self.g * np.tile(np.arange(self.Na), self.Nr) *
+                                np.repeat(np.sqrt(np.arange(1, self.Nr + 1)), self.Na))[:-1], -1))
+        else:
+            self.H += (np.diag((self.g * np.tile(np.arange(self.Na), self.Nr) *
+                                np.repeat(np.sqrt(np.arange(1, self.Nr + 1)), self.Na))[:-1], 1) +
+                       np.diag((self.g * np.tile(np.arange(self.Na), self.Nr) *
+                                np.repeat(np.sqrt(np.arange(1, self.Nr + 1)), self.Na))[:-1], -1) +
+                       np.diag((self.g * np.tile(np.arange(self.Na), self.Nr) *
+                                np.repeat(np.sqrt(np.arange(1, self.Nr + 1)), self.Na))[1:-2], 3) +
+                       np.diag((self.g * np.tile(np.arange(self.Na), self.Nr) *
+                                np.repeat(np.sqrt(np.arange(1, self.Nr + 1)), self.Na))[1:-2], -3))
 
-                self.v[self.Na * i - 1, self.Na * i - 1] = v1
-                self.v[self.Na * i, self.Na * i - 1] = - v2
-                self.v[self.Na * i - 1, self.Na * i] = v2
-                self.v[self.Na * i, self.Na * i] = v1
-
-            if d <= 0:
-                sgn = -1.0
-            else:
-                sgn = 1.0
-
-            Eg = (self.wr * np.arange(self.Nr)
-                  - 0.5 * sgn * np.sqrt(d**2 + 4 * self.g**2 * np.arange(self.Nr)))
-            Ee = (self.wr * np.arange(1, self.Nr + 1)
-                  + 0.5 * sgn * np.sqrt(d**2 + 4 * self.g**2 * np.arange(1, self.Nr + 1)))
-
-            # self.E = np.sort(np.hstack((Eg, Ee)))
-
-            self.E = np.empty(self.Na * self.Nr)
-            self.E[0] = Eg[0]
-            for i in range(1, self.Nr):
-                if d <= 0:
-                    self.E[self.Na * i - 1:self.Na * i + 1] = (Ee[i - 1], Eg[i])
-                else:
-                    self.E[self.Na * i - 1:self.Na * i + 1] = (Eg[i], Ee[i - 1])
-            self.E[-1] = Ee[-1]
-            self.Eg = self.E[0]
+        super().diagonalize_hamiltonian()
 
         self._creator_annihilator()
 
@@ -338,23 +340,31 @@ class ResonatorTLS(ResonatorAtom):
         fig, ax = plt.subplots(1, 1, figsize=(figwidth, 3.0 / 8.0 * figwidth))
         ax.axis("off")
 
-        ax.text(0.5, 2.0, "Quantum Rabi model:", va="top", fontsize=12)
+        ax.text(0.5, 2.0, "Assymetric quantum Rabi model:", va="top", fontsize=12)
         ax.text(1.0, 1.5, r"$H=\hbar \omega_\mathrm{r} \left(a^\dagger a + \frac{1}{2}\right)"
-                           r" + \frac{\hbar \omega_\mathrm{a}}{2} \sigma_z + \hbar g (a^\dagger + a)\sigma_x$",
+                          r" + \frac{\hbar \omega_\mathrm{a}^\mathrm{x}}{2} \sigma_x"
+                          r" + \frac{\hbar \omega_\mathrm{a}^\mathrm{y}}{2} \sigma_y"
+                          r" + \frac{\hbar \omega_\mathrm{a}^\mathrm{z}}{2} \sigma_z$" + "\n" +
+                          r"$\qquad \qquad \qquad \qquad \qquad \qquad \qquad \qquad"
+                          r"+ \hbar g (a^\dagger + a)\sigma_x$",
                 va="top", fontsize=15, math_fontfamily='dejavuserif')
 
-        ax.text(0.5, 0.5, "Jaynes-Cummings model:",
+        ax.text(0.5, 0.5, "Rotating wave approximation:",
                 va="top", fontsize=12)
         ax.text(1.0, 0.0, r"$H=\hbar \omega_\mathrm{r} \left(a^\dagger a + \frac{1}{2}\right)"
-                          r" + \frac{\hbar \omega_\mathrm{a}}{2} \sigma_z + \hbar g (a^\dagger \sigma^- + a \sigma^+)$",
+                          r" + \frac{\hbar \omega_\mathrm{a}^\mathrm{x}}{2} \sigma_x"
+                          r" + \frac{\hbar \omega_\mathrm{a}^\mathrm{y}}{2} \sigma_y"
+                          r" + \frac{\hbar \omega_\mathrm{a}^\mathrm{z}}{2} \sigma_z$" + "\n" +
+                          r"$\qquad \qquad \qquad \qquad \qquad \qquad \qquad \qquad"
+                          r" + \hbar g (a^\dagger \sigma^- + a \sigma^+)$",
                 va="top", fontsize=15, math_fontfamily='dejavuserif')
 
         #ax.axvline(0.0)
-        #ax.axvline(6.0)
+        #ax.axvline(8.0)
         #ax.axhline(-0.9)
         #ax.axhline(2.1)
 
-        ax.set_xlim(0.0, 6.0)
+        ax.set_xlim(0.0, 8.0)
         ax.set_ylim(-0.9, 2.1)
 
         return fig
@@ -368,6 +378,9 @@ class ResonatorTLS(ResonatorAtom):
 
         return (f"wr = {self.wr:.4e}\n"
                 f"wa = {self.wa:.4e}\n"
+                f"wa_x = {self.wa_x:.4e}\n"
+                f"wa_y = {self.wa_y:.4e}\n"
+                f"wa_z = {self.wa_z:.4e}\n"
                 f"g = {self.g:.4e}\n"
                 f"RWA = {self.RWA}\n"
                 )
@@ -376,8 +389,11 @@ class ResonatorTLS(ResonatorAtom):
 
         def __init__(self, resonator_TLS):
 
-            self.wa = resonator_TLS.wa
             self.wr = resonator_TLS.wr
+            self.wa = resonator_TLS.wa
+            self.wa_x = resonator_TLS.wa_x
+            self.wa_y = resonator_TLS.wa_y
+            self.wa_z = resonator_TLS.wa_z
             self.g = resonator_TLS.g
             self.RWA = resonator_TLS.RWA
             self.Nr = resonator_TLS.Nr

@@ -11,6 +11,8 @@ class ResonatorAtom:
 
     def __init__(self):
 
+        self._dtype = float
+
         self.H = None
         self.E = None
         self.Eg = 0.0
@@ -72,10 +74,10 @@ class ResonatorAtom:
         self.steps = par_sweep.size
         self.par_sweep = par_sweep
         self.system_pars_sweep = np.zeros(self.steps, dtype=object)
-        self.H_sweep = np.zeros((self.Nr * self.Na, self.Nr * self.Na, self.steps))
+        self.H_sweep = np.zeros((self.Nr * self.Na, self.Nr * self.Na, self.steps), dtype=self._dtype)
         self.E_sweep = np.zeros((self.Nr * self.Na, self.steps))
         self.Eg_sweep = np.zeros(self.steps)
-        self.v_sweep = np.zeros((self.Nr * self.Na, self.Nr * self.Na, self.steps))
+        self.v_sweep = np.zeros((self.Nr * self.Na, self.Nr * self.Na, self.steps), dtype=self._dtype)
 
         self._sweep_sorted = False
         self.E_sort_sweep = None
@@ -349,7 +351,7 @@ class ResonatorAtom:
             k += 1
 
         self.E_sort = np.full((self.Na, self.Nr), np.nan)
-        self.v_sort = np.full((self.Na, self.Nr, self.Na * self.Nr), np.nan)
+        self.v_sort = np.full((self.Na, self.Nr, self.Na * self.Nr), np.nan, dtype=self._dtype)
 
         terminate = False
         i = 0
