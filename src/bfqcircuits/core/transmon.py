@@ -18,8 +18,6 @@ class Transmon:
         # transmon parameters
         self.C = 0.0
         self.Ej = None
-        self._josephson_harmonics = False
-
         self.Ec = 0.0
         self.w = 0.0
         self.ng = 0.0
@@ -100,7 +98,7 @@ class Transmon:
 
         keys = list(par_sweep.keys())
 
-        self.steps = par_sweep[keys[0]].size
+        self.steps = par_sweep[keys[0]].shape[0]
         self._initialize_sweep(np.arange(self.steps))
 
         for i in range(self.steps):
@@ -115,6 +113,8 @@ class Transmon:
                         self.Ej = np.asarray(self.Ej)
                     else:
                         self.Ej = np.array([self.Ej])
+
+                self.w = np.sqrt(self.Ej[0] * self.Ec)
 
             self._calc_sweep(i)
 
@@ -150,7 +150,6 @@ class Transmon:
         self.Ec = self.transmon_pars_sweep[step].Ec
         self.Ej = self.transmon_pars_sweep[step].Ej
         self.ng = self.transmon_pars_sweep[step].ng
-
         self.w = self.transmon_pars_sweep[step].w
         self.N = self.transmon_pars_sweep[step].N
         self._operators()
@@ -261,8 +260,8 @@ class Transmon:
         :return: absolute flux dipole moment, absolute charge dipole moment
         """
 
-        cdm = np.sum(self.v[:, state1] * self.charge_operator * self.v[:, state2])
         fdm = np.dot(self.v[:, state1], np.dot(self.flux_operator, self.v[:, state2]))
+        cdm = np.sum(self.v[:, state1] * self.charge_operator * self.v[:, state2])
 
         return np.abs(fdm), np.abs(cdm)
 
@@ -301,7 +300,7 @@ class Transmon:
     #####  plots  #####
     ###################
 
-    def plot_transmon(self, ax, n, x_range=1.0, remove_ng=False, fill_between=True, scale=1.0):
+    def plot_transmon(self, ax, n, x_range=1.0, remove_ng=False, fill_between=True, scale=None):
         """
         Plot of the potential and wave functions.
 
@@ -316,14 +315,17 @@ class Transmon:
         """
 
         sample = 1001
-        x = np.linspace(- x_range * np.pi, x_range * np.pi, sample)
+        x = np.linspace(- x_range / 2, x_range / 2, sample)
         if self.Ej.size == 1:
-            y = - self.Ej * np.cos(x)
+            y = - self.Ej * np.cos(2 * np.pi * x)
         else:
             y = np.zeros_like(x)
             for i in range(self.Ej.size):
-                y -= self.Ej[i] * np.cos((i + 1) * x)
+                y -= self.Ej[i] * np.cos((i + 1) * 2 * np.pi * x)
         ax.plot(x, y, 'k')
+
+        if scale is None:
+            scale = np.sqrt(self.w)  # integral of squared wavefunction defaults to hbar * w.
 
         for i in range(n - 1, -1, -1):  # plot lowest functions last looks better in case they overlap
 
@@ -333,15 +335,12 @@ class Transmon:
 
                 if not remove_ng:   # Wave functions as they actually are. They fullfill the periodic boundary condition.
                                     # However, they entail a complex valued plane wave with wave vector ng
-
-                    # integral of squared wavefunction coressponds to hbar * w. For fine adjustments scale can be used
-                    y += (scale * self.v[j, i] * np.sqrt(self.w) / np.sqrt(2 * np.pi) *
-                          np.exp(1j * (j - (self.N - 1) // 2) * x))
+                    y += (scale * self.v[j, i] / np.sqrt(2 * np.pi) *
+                          np.exp(2j * np.pi * (j - (self.N - 1) // 2) * x))
 
                 else:
-                    # integral of squared wavefunction coressponds to hbar * w. For fine adjustments scale can be used
-                    y += (scale * self.v[j, i] * np.sqrt(self.w) / np.sqrt(2 * np.pi) *
-                          np.exp(1j * (j - (self.N - 1) // 2 - self.ng) * x))
+                    y += (scale * self.v[j, i] / np.sqrt(2 * np.pi) *
+                          np.exp(2j * np.pi * (j - (self.N - 1) // 2 - self.ng) * x))
 
             if not remove_ng:
                 if fill_between:
@@ -352,7 +351,7 @@ class Transmon:
                 ax.plot(x, self.E[i] + np.real(y), self.colors[i], ls="-")
                 ax.plot(x, self.E[i] + np.imag(y), self.colors[i], ls="--")
             else:
-                if i % 2 == 0:
+                if np.sum(np.abs(np.real(y))) > np.sum(np.abs(np.imag(y))):
                     if fill_between:
                         ax.fill_between(x, self.E[i] + np.real(y), self.E[i],
                                         edgecolor=None, facecolor=self.colors[i], alpha=0.5)
@@ -484,13 +483,8 @@ class Transmon:
         :return: 1D numpy array with state energies in [GHz]
         """
 
-        if self.Ej.size == 1:
-            Ej = self.Ej
-        else:
-            Ej = self.Ej[0]
-
         n = np.arange(self.N)
-        E_approx = self.w * (n + 0.5) - Ej - self.Ec / 16 * (n**2 + n + 0.5)
+        E_approx = self.w * (n + 0.5) - self.Ej[0] - self.Ec / 16 * (n**2 + n + 0.5)
 
         return E_approx
 
