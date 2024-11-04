@@ -1616,7 +1616,7 @@ class ResonatorFluxoniumCapacitiveProduct(ResonatorFluxoniumCapacitive):
         b_daggar = np.sum(self.sqrts_r * v1[self.Na:] * v2[:-self.Na])
         b = np.sum(self.sqrts_r * v1[:-self.Na] * v2[self.Na:])
 
-        return np.abs(self.flux_zpf[0, 0] * (b_daggar + b)), np.abs(self.charge_zpf[1, 1] * (b_daggar - b))
+        return np.abs(self.flux_zpf[0, 0] * (b_daggar + b)), np.abs(self.charge_zpf[0, 0] * (b_daggar - b))
 
     def calc_atom_dipole_moments(self, state1, state2):
         """
