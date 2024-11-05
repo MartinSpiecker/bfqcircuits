@@ -236,7 +236,7 @@ class FluxoniumLCAO(Fluxonium):
             ax.set_xlabel(r"$x_\mathrm{r}$ $(1 / \sqrt{GHz})$")
         ax.set_ylabel(r"excitation")
 
-    def plot_fluxonium(self, ax, n, x_range=5.0, unit_mass=False, fill_between=True, scale=1.0):
+    def plot_fluxonium(self, ax, n, x_range=5.0, unit_mass=False, fill_between=True, scale=None):
         """
         Plot of the potential and wave functions.
 
@@ -271,6 +271,9 @@ class FluxoniumLCAO(Fluxonium):
             y = (self.w * x) ** 2 / 2 - self.Ej * np.cos(u * x + self.p_ext)
             ax.plot(x, y, color='k', linewidth=1.0, zorder=0)
 
+        if scale is None:
+            scale = np.sqrt(self.w)  # integral of squared wavefunction defaults to hbar * w.
+
         # plot lowest n functions
         for i in range(0, n):
 
@@ -282,8 +285,8 @@ class FluxoniumLCAO(Fluxonium):
                 k = self.states[j, 1]  # excitation
 
                 # integral of wave function corresponds to hbar * w. For fine adjustments amp  can be used
-                y += scale * self.v[j, i] * self.w * np.sqrt(beta) * sp.norm_hermite(k, beta * (x - (2 * m * np.pi -
-                                                                                                     self.p_ext) / u))
+                y += scale * self.v[j, i] * np.sqrt(beta) * sp.norm_hermite(k, beta * (x - (2 * m * np.pi -
+                                                                                            self.p_ext) / u))
             y += self.E[i]
 
             if not fill_between:
@@ -419,7 +422,7 @@ class FluxoniumLCAO(Fluxonium):
                 f"Ejs = {self.Ejs:.4e}\n"
                 f"Ejd = {self.Ejd:.4e}\n"
                 f"ℏω = {self.w:.4e}\n"
-                f"ℏωᴊ = {self.wj:.4e}\n"
+                f"ℏωⱼ = {self.wj:.4e}\n"
                 f"u = {self.u:.4e}\n"
                 f"Z = {self.Z:.4e}\n"
                 f"flux_zpf = {self.flux_zpf:.4e}\n"

@@ -363,7 +363,7 @@ class Transmon:
                     ax.plot(x, self.E[i] + np.imag(y), self.colors[i])
 
         ax.set_xlabel(r"$\phi$ ($\Phi_0$)")
-        ax.set_ylabel("Energy (GHz)")
+        ax.set_ylabel("$E$ (GHz)")
 
     def plot_energy_sweep(self, ax, n):
         """
@@ -442,9 +442,9 @@ class Transmon:
         ax.set_xlabel("sweep parameter")
         ax.set_ylabel(r"$E$ (GHz)")
         if dipole == "flux":
-            ax.set_zlabel(r"$\langle \psi_m|\phi| \psi_n\rangle$ ($\Phi_0$)", labelpad=8)
+            ax.set_zlabel(r"$|\langle \psi_m|\phi| \psi_n\rangle |$ ($\Phi_0$)", labelpad=8)
         elif dipole == "charge":
-            ax.set_zlabel(r"$\langle \psi_m|q| \psi_n\rangle$ ($2e$)", labelpad=8)
+            ax.set_zlabel(r"$|\langle \psi_m|q| \psi_n\rangle |$ ($2e$)", labelpad=8)
 
     ##################
     #####  core  #####
@@ -607,7 +607,7 @@ class Transmon:
                 f"Ec = {self.Ec:.4e}\n"
                 f"Ej = {s}\n"
                 f"ℏω = {self.w:.4e}\n"
-                f"Ej / Ec = {np.sqrt(self.Ej[0] * self.Ec):.4e}\n"
+                f"Ej / Ec = {np.sqrt(self.Ej[0] / self.Ec):.4e}\n"
                 )
 
     ########################################

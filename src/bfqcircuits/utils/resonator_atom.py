@@ -715,6 +715,6 @@ class ResonatorAtom:
         ax.set_xlabel("sweep parameter")
         ax.set_ylabel("$E$ (GHz)")
         if dipole == "flux":
-            ax.set_zlabel(r'$\langle \phi_\mathrm{r} \rangle$ (\Phi_0)')
+            ax.set_zlabel(r'$|\langle \phi_\mathrm{r} \rangle |$ (\Phi_0)')
         else:
-            ax.set_zlabel(r'$\langle q_\mathrm{r} \rangle$ (2e)')
+            ax.set_zlabel(r'$|\langle q_\mathrm{r} \rangle |$ (2e)')

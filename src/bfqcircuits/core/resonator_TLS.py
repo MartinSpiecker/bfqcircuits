@@ -234,9 +234,9 @@ class ResonatorTLS(ResonatorAtom):
         ax.set_xlabel("sweep parameter")
         ax.set_ylabel("$E$ (GHz)")
         if dipole == "x":
-            ax.set_zlabel(r'$\langle x \rangle$')
+            ax.set_zlabel(r'$|\langle x \rangle |$')
         elif dipole == "y":
-            ax.set_zlabel(r'$\langle y \rangle$')
+            ax.set_zlabel(r'$|\langle y \rangle |$')
 
     ##################
     #####  core  #####

@@ -501,7 +501,7 @@ class Fluxonium:
     #####  plots  #####
     ###################
 
-    def plot_fluxonium(self, ax, n, x_range=2.0, unit_mass=False, fill_between=True, scale=1.0):
+    def plot_fluxonium(self, ax, n, x_range=2.0, unit_mass=False, fill_between=True, scale=None):
         """
         Plot of the potential and wave functions.
 
@@ -535,14 +535,16 @@ class Fluxonium:
             y = (self.w * x) ** 2 / 2 - self.Ej * np.cos(u * x + self.p_ext)
             ax.plot(x, y, color='k', linewidth=1.0, zorder=0)
 
+        if scale is None:
+            scale = np.sqrt(self.w)  # integral of squared wavefunction defaults to hbar * w.
+
         # plot lowest n functions
         for i in range(n):
 
             y = np.zeros_like(x)
 
             for j in range(self.N):
-                # integral of wave function corresponds to hbar * w. For fine adjustments scale can be used
-                y += scale * self.v[j, i] * self.w * np.sqrt(beta) * sp.norm_hermite(j, beta * x)
+                y += scale * self.v[j, i] * np.sqrt(beta) * sp.norm_hermite(j, beta * x)
             y += self.E[i]
 
             if not fill_between:
@@ -636,9 +638,9 @@ class Fluxonium:
         ax.set_xlabel("sweep parameter")
         ax.set_ylabel(r"$E$ (GHz)")
         if dipole == "flux":
-            ax.set_zlabel(r"$\langle \psi_m|\phi| \psi_n\rangle$ ($\Phi_0$)", labelpad=8)
+            ax.set_zlabel(r"$|\langle \psi_m|\phi| \psi_n\rangle |$ ($\Phi_0$)", labelpad=8)
         elif dipole == "charge":
-            ax.set_zlabel(r"$\langle \psi_m|q| \psi_n\rangle$ ($2e$)", labelpad=8)
+            ax.set_zlabel(r"$|\langle \psi_m|q| \psi_n\rangle |$ ($2e$)", labelpad=8)
 
     ##################
     #####  core  #####
