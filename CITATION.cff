@@ -5,7 +5,7 @@ authors:
     given-names: Martin
     orcid: https://orcid.org/0000-0001-8640-3270
 title: "Black Forest Quantum Circuits"
-version: v0.2.0
+version: v0.2.1
 identifiers:
   - type: doi
     value: 10.5281/zenodo.13695982

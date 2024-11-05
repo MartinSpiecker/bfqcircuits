@@ -4,4 +4,4 @@
 
 __author__ = """Martin Spiecker"""
 __email__ = "47812395+MartinSpiecker@users.noreply.github.com"
-__version__ = "v0.2.0"
+__version__ = "v0.2.1"
