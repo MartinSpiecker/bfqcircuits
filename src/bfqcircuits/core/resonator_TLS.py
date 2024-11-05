@@ -343,12 +343,12 @@ class ResonatorTLS(ResonatorAtom):
         :return: string
         """
 
-        return (f"wr = {self.wr:.4e}\n"
-                f"wa = {self.wa:.4e}\n"
-                f"wa_x = {self.wa_x:.4e}\n"
-                f"wa_y = {self.wa_y:.4e}\n"
-                f"wa_z = {self.wa_z:.4e}\n"
-                f"g = {self.g:.4e}\n"
+        return (f"ℏωᵣ = {self.wr:.4e}\n"
+                f"ℏωₐ = {self.wa:.4e}\n"
+                f"ℏωₐ_x = {self.wa_x:.4e}\n"
+                f"ℏωₐ_y = {self.wa_y:.4e}\n"
+                f"ℏωₐ_z = {self.wa_z:.4e}\n"
+                f"ℏg = {self.g:.4e}\n"
                 f"RWA = {self.RWA}\n"
                 )
 

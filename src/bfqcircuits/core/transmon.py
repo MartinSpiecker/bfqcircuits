@@ -606,7 +606,7 @@ class Transmon:
         return (f"C = {self.C:.4e}\n"
                 f"Ec = {self.Ec:.4e}\n"
                 f"Ej = {s}\n"
-                f"w = {self.w:.4e}\n"
+                f"ℏω = {self.w:.4e}\n"
                 f"Ej / Ec = {np.sqrt(self.Ej[0] * self.Ec):.4e}\n"
                 )
 

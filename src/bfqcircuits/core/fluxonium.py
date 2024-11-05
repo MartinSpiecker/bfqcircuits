@@ -791,7 +791,7 @@ class Fluxonium:
                 f"Ejs = {self.Ejs:.4e}\n"
                 f"Ejd = {self.Ejd:.4e}\n"
                 f"ratio = {self.ratio:.4e}\n"
-                f"w = {self.w:.4e}\n"
+                f"ℏω = {self.w:.4e}\n"
                 f"u = {self.u:.4e}\n"
                 f"Z = {self.Z:.4e}\n"
                 f"flux_zpf = {self.flux_zpf:.4e}\n"
